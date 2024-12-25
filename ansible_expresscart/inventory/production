@@ -1,8 +1,13 @@
 [webserver]
-192.168.1.10
+localhost ansible_connection=local
 
 [database]
-192.168.1.11
+localhost ansible_connection=local
 
 [appserver]
-192.168.1.12
+localhost ansible_connection=local
+
+
+[all:vars]
+app_domain=localhost
+app_port=3000

@@ -1,20 +1,65 @@
 ---
+- name: Install MongoDB repository key
+  ansible.builtin.apt_key:
+    url: https://www.mongodb.org/static/pgp/server-6.0.asc
+    state: present
+
+- name: Add MongoDB repository
+  ansible.builtin.apt_repository:
+    repo: "deb [ arch=amd64 signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse"
+    filename: mongodb-org
+    state: present
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    force_apt_get: yes
+  ignore_errors: True
+
 - name: Install MongoDB
   ansible.builtin.apt:
-    name: mongodb
+    name: mongodb-org
     state: present
-    update_cache: yes
 
-- name: Start MongoDB service
+- name: Start and enable MongoDB service
   ansible.builtin.service:
-    name: mongodb
+    name: mongod
     state: started
     enabled: true
 
+- name: Wait for MongoDB to be ready
+  ansible.builtin.wait_for:
+    port: 27017
+    host: 127.0.0.1
+    delay: 10
+    timeout: 60
+    state: started
+
 - name: Create MongoDB user and database
   ansible.builtin.shell: |
-    mongo --eval "db.getSiblingDB('{{ db_name }}').createUser({
-      user: '{{ db_user }}',
-      pwd: '{{ db_password }}',
-      roles: [{ role: 'readWrite', db: '{{ db_name }}' }]
-    })"
+    mongosh --quiet --eval "
+      db = db.getSiblingDB('{{ db_name }}');
+      if (!db.getUser('{{ db_user }}')) {
+        db.createUser({
+          user: '{{ db_user }}',
+          pwd: '{{ db_password }}',
+          roles: [{ role: 'readWrite', db: '{{ db_name }}' }]
+        });
+      } else {
+        print('User {{ db_user }} already exists.');
+      }
+    "
+  args:
+    creates: "/tmp/mongo_user_created"
+  register: mongo_user_creation
+  when: db_name is defined and db_user is defined and db_password is defined
+
+- name: Debug user creation output
+  ansible.builtin.debug:
+    msg: "{{ mongo_user_creation.stdout_lines }}"
+
+- name: Ensure MongoDB is running
+  ansible.builtin.service:
+    name: mongod
+    state: started
+    enabled: true
