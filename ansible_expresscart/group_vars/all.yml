@@ -1,0 +1,11 @@
+# Configuration de la base de données
+db_name: expresscart
+db_user: expresscart_user
+db_password: securepassword
+db_host: 192.168.1.11
+
+# Port de l'application
+app_port: 3000
+
+# Nom de domaine ou IP
+app_domain: expresscart.local

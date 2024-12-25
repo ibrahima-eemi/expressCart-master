@@ -1,0 +1,30 @@
+---
+- name: Install Node.js
+  ansible.builtin.shell: |
+    curl -sL https://deb.nodesource.com/setup_16.x | bash -
+    apt-get install -y nodejs
+  args:
+    executable: /bin/bash
+
+- name: Clone the application repository
+  ansible.builtin.git:
+    repo: "https://github.com/mrvautin/expressCart.git"
+    dest: /var/www/expresscart
+
+- name: Install npm dependencies
+  ansible.builtin.shell: |
+    npm install
+  args:
+    chdir: /var/www/expresscart
+
+- name: Configure environment variables
+  ansible.builtin.template:
+    src: .env.j2
+    dest: /var/www/expresscart/.env
+
+- name: Start the application
+  ansible.builtin.shell: |
+    npm start
+  args:
+    chdir: /var/www/expresscart
+    creates: /var/www/expresscart/pid

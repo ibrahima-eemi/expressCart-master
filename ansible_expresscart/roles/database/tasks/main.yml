@@ -1,0 +1,20 @@
+---
+- name: Install MongoDB
+  ansible.builtin.apt:
+    name: mongodb
+    state: present
+    update_cache: yes
+
+- name: Start MongoDB service
+  ansible.builtin.service:
+    name: mongodb
+    state: started
+    enabled: true
+
+- name: Create MongoDB user and database
+  ansible.builtin.shell: |
+    mongo --eval "db.getSiblingDB('{{ db_name }}').createUser({
+      user: '{{ db_user }}',
+      pwd: '{{ db_password }}',
+      roles: [{ role: 'readWrite', db: '{{ db_name }}' }]
+    })"

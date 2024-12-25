@@ -1,0 +1,7 @@
+---
+- name: Deploy infrastructure and application
+  hosts: all
+  roles:
+    - webserver
+    - database
+    - appserver
