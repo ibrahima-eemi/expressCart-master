@@ -3,6 +3,8 @@ Déploiement de l'Infrastructure avec Ansible
 
 Ce guide fournit des instructions détaillées pour utiliser Ansible afin de configurer et déployer les différentes composantes nécessaires au projet expressCart.
 
+![image](https://github.com/user-attachments/assets/4ca962f4-b56a-4e8a-ba12-702a71ab8c28)
+
 ## Prérequis
 
 ### Installer Ansible
