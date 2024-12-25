@@ -1,5 +1,8 @@
 # Configuration pour localhost
 app_domain: localhost
-app_port: 3000
+app_port: 1111
 app_root: /home/barry/Bureau/expressCart-master
-
+db_name: expresscart
+db_user: admin
+db_password: securepassword
+db_host: 127.0.0.1
