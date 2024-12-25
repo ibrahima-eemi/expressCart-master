@@ -1,65 +1,141 @@
-# Déploiement de l'Infrastructure avec Ansible
+Déploiement de l'Infrastructure avec Ansible
+# Guide de Déploiement avec Ansible pour expressCart
 
-Ce guide explique comment utiliser les playbooks Ansible pour déployer l'infrastructure nécessaire au projet **expressCart**.
+Ce guide fournit des instructions détaillées pour utiliser Ansible afin de configurer et déployer les différentes composantes nécessaires au projet expressCart.
 
 ## Prérequis
 
-1. **Ansible installé** : Assurez-vous qu'Ansible est installé sur votre machine. Vous pouvez l'installer avec :
-    ```bash
-    sudo apt update && sudo apt install -y ansible
-    ```
-2. **Accès SSH** : Ajoutez les clés SSH pour accéder aux machines cibles. Configurez-les dans l'inventaire Ansible (`inventory/production`).
+### Installer Ansible
+Assurez-vous qu'Ansible est installé sur votre machine. Si ce n'est pas déjà fait, installez-le avec :
 
-## Machines cibles
+```bash
+sudo apt update && sudo apt install -y ansible
+```
 
-- Une machine pour le serveur web (Nginx).
-- Une machine pour la base de données (MongoDB).
-- Une machine pour le serveur applicatif (Node.js).
+### Configuration SSH
+- Configurez l'accès SSH aux machines cibles en ajoutant vos clés SSH.
+- Définissez les machines cibles dans l'inventaire Ansible (`inventory/production`).
+
+### Vérifications système
+- Les machines doivent disposer des prérequis système pour Nginx, MongoDB, et Node.js.
+- Un accès sudo doit être configuré pour l'utilisateur Ansible.
+
+## Architecture cible
+Le projet se compose de trois services principaux, déployés sur des machines distinctes :
+- **Serveur web** : Nginx.
+- **Base de données** : MongoDB.
+- **Serveur applicatif** : Node.js, avec l'application expressCart accessible sur le port 1111.
 
 ## Structure du Projet
+Voici l'organisation des fichiers et dossiers Ansible :
 
 ```plaintext
 ansible_project/
 ├── inventory/
-│   └── production
+│   └── production               # Inventaire des machines cibles
 ├── group_vars/
-│   └── all.yml
+│   └── all.yml                  # Variables globales pour toutes les machines
 ├── roles/
-│   ├── webserver/
-│   ├── database/
-│   ├── appserver/
+│   ├── webserver/               # Configuration de Nginx
+│   ├── database/                # Configuration de MongoDB
+│   ├── appserver/               # Configuration du serveur applicatif
 ├── playbooks/
-│   └── site.yml
+│   └── site.yml                 # Playbook principal orchestrant tout le déploiement
 ```
 
 ## Instructions pour Lancer les Playbooks
 
-1. Clonez ce dépôt sur votre machine locale :
-    ```bash
-    git clone https://github.com/ibrahima-eemi/expressCart-master.git
-    cd ansible_expresscart
-    ```
-2. Mettez à jour l'inventaire avec les adresses IP des machines cibles dans `inventory/production`.
+### Cloner le dépôt
+Téléchargez le projet sur votre machine locale :
 
-3. Lancez le playbook principal :
-    ```bash
-    ansible-playbook -i inventory/production playbooks/site.yml
-    ```
+```bash
+git clone https://github.com/ibrahima-eemi/expressCart-master.git
+cd expressCart-master/ansible_expresscart
+```
 
-Ce playbook configure :
+### Configurer l'inventaire
+Ouvrez le fichier `inventory/production` et ajoutez les adresses IP ou noms d’hôte des machines cibles. Par exemple :
 
-- Le serveur web (Nginx).
-- La base de données (MongoDB).
-- Le serveur applicatif (Node.js) avec le projet expressCart.
+```ini
+[webserver]
+192.168.1.10 ansible_user=ubuntu
+
+[database]
+192.168.1.11 ansible_user=ubuntu
+
+[appserver]
+192.168.1.12 ansible_user=ubuntu
+```
+
+### Mettre à jour les variables
+Configurez les paramètres globaux dans `group_vars/all.yml` :
+
+```yaml
+app_port: 1111
+db_name: expresscart
+db_user: admin
+db_password: securepassword
+db_host: 127.0.0.1
+```
+
+### Exécuter le playbook principal
+Lancez le playbook pour déployer toute l'infrastructure :
+
+```bash
+ansible-playbook -i inventory/production playbooks/site.yml --become
+```
 
 ## Dépannage
 
-Si des erreurs se produisent, utilisez le mode verbose pour obtenir des détails :
+### Mode verbose
+Si une erreur survient, utilisez le mode verbose pour plus de détails :
+
 ```bash
-ansible-playbook -i inventory/production playbooks/site.yml -v
+ansible-playbook -i inventory/production playbooks/site.yml --become -vvv
 ```
 
-Pour cibler un rôle ou une machine spécifique, utilisez l'option `--tags` ou `--limit` :
+### Exécution ciblée
+Pour exécuter un rôle spécifique :
+
 ```bash
 ansible-playbook -i inventory/production playbooks/site.yml --tags "webserver"
 ```
+
+Pour déployer uniquement sur une machine spécifique :
+
+```bash
+ansible-playbook -i inventory/production playbooks/site.yml --limit "webserver"
+```
+
+### Logs MongoDB
+Si MongoDB ne fonctionne pas comme prévu, consultez les journaux :
+
+```bash
+journalctl -u mongod
+```
+
+### Redémarrage des services
+Si un service ne fonctionne pas, redémarrez-le :
+
+```bash
+sudo systemctl restart nginx
+sudo systemctl restart mongod
+```
+
+## Résultat attendu
+Après l'exécution du playbook :
+- **Serveur web** : Nginx est configuré et accessible.
+- **Base de données** : MongoDB est configuré avec un utilisateur pour l'application.
+- **Application** : Le projet expressCart est déployé et accessible sur le port 1111.
+
+## Vérification de l'installation
+
+### Accéder à l'application
+Ouvrez un navigateur et visitez l'adresse suivante :
+
+```http
+http://localhost:1111
+```
+
+### Personnalisation
+Vous pouvez modifier le port ou d'autres paramètres via `group_vars/all.yml`.
